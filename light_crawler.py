@@ -59,7 +59,7 @@ class LightCrawler:
             for each_res_content in res_contents:
                 for each_url in each_res_content.found_urls:
                     if each_url not in self.checked_urls:
-                        self.checked_urls.append(each_url)
+                        self.checked_urls.extend([each.url for each in res_contents])
                         to_fetch.append(each_url)
 
         print(len(self.results))
@@ -67,5 +67,6 @@ class LightCrawler:
 
 if __name__ == '__main__':
     # target_url = 'https://pymotw.com/3/'
-    target_url = 'https://www.prothomalo.com/'
+    # target_url = 'https://www.prothomalo.com/'
+    target_url = 'https://yeray.dev/'
     asyncio.run(LightCrawler(target_url, 3).start_crawl())
