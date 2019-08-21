@@ -25,7 +25,7 @@ class LightCrawler:
         dom = lh.fromstring(html)
         for href in dom.xpath('//a/@href'):
             url = urljoin(self.base_url, href)
-            if url.startswith(self.base_url):
+            if url.startswith(self.base_url) and url not in self.checked_urls:
                 found_urls.append(url)
 
         return found_urls
@@ -42,6 +42,7 @@ class LightCrawler:
     async def multi_fetch(self, fetch_urls):
         async with aiohttp.ClientSession() as session:
             coros = [self.single_fetch(session, each) for each in fetch_urls]
+            self.checked_urls.extend(fetch_urls)
             fan_in_results = await asyncio.gather(*coros)
             res_contents = []
             for each in fan_in_results:
@@ -57,16 +58,13 @@ class LightCrawler:
             self.results.extend(res_contents)
             to_fetch = []
             for each_res_content in res_contents:
-                for each_url in each_res_content.found_urls:
-                    if each_url not in self.checked_urls:
-                        self.checked_urls.extend([each.url for each in res_contents])
-                        to_fetch.append(each_url)
+                to_fetch.extend(each_res_content.found_urls)
 
         print(len(self.results))
+        print(len(self.checked_urls))
 
 
 if __name__ == '__main__':
-    # target_url = 'https://pymotw.com/3/'
+    target_url = 'https://pymotw.com/3/'
     # target_url = 'https://www.prothomalo.com/'
-    target_url = 'https://yeray.dev/'
     asyncio.run(LightCrawler(target_url, 3).start_crawl())
