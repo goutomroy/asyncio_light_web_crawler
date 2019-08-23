@@ -9,16 +9,18 @@ ResContent = namedtuple('ResContent', ['url', 'content', 'found_urls'])
 
 class LightCrawler:
 
-    def __init__(self, start_url, depth=3):
+    def __init__(self, start_url, depth=3, max_concurrency=200):
         self.start_url = start_url
         self.base_url = '{}://{}'.format(urlparse(self.start_url).scheme, urlparse(self.start_url).netloc)
         self.depth = depth
         self.checked_urls = []
         self.results = []
+        self.bounded_sempahore = asyncio.BoundedSemaphore(max_concurrency)
 
     async def pull_page(self, session, url):
-        async with session.get(url, timeout=30) as response:
-            return await response.read()
+        async with self.bounded_sempahore:
+            async with session.get(url, timeout=30) as response:
+                return await response.read()
 
     async def find_urls(self, html):
         found_urls = []
